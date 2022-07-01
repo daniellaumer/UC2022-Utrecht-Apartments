@@ -1,5 +1,4 @@
-import Color from "@arcgis/core/Color";
-import { whenOnce } from "@arcgis/core/core/reactiveUtils";
+
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import SolidEdges3D from "@arcgis/core/symbols/edges/SolidEdges3D";
@@ -8,7 +7,7 @@ import PolygonSymbol3D from "@arcgis/core/symbols/PolygonSymbol3D";
 import SceneView from "@arcgis/core/views/SceneView";
 import Map from "@arcgis/core/Map";
 import "@esri/calcite-components/dist/calcite/calcite.css";
-import "@esri/calcite-components/dist/components/calcite-loader";
+import "@esri/calcite-components/dist/components/calcite-button";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 
@@ -126,6 +125,7 @@ const osmBuildings = new SceneLayer({
   url: "https://basemaps3d.arcgis.com/arcgis/rest/services/OpenStreetMap3D_Buildings_v1/SceneServer",
   title: "OpenStreetMap Buildings",
   visible: false,
+  excludeObjectIds: [22244537, 1062063544, 2372497640, 2777335364]
 });
 map.add(osmBuildings);
 
@@ -169,11 +169,31 @@ const view = new SceneView({
   qualityProfile: "high",
 });
 
+view.ui.add("selection", "bottom-right");
+
 view.ui.add(new Home({view:view}), "top-left")
 
-whenOnce(() => !view.updating).then(() => {
-  const loader = document.getElementById("loader");
-  loader?.parentElement?.removeChild(loader);
+let realistic = document.getElementById("realistic") as HTMLCalciteButtonElement;
+let schematic = document.getElementById("schematic") as HTMLCalciteButtonElement;
+
+realistic.addEventListener("click", () => {
+  realistic.appearance = "solid";
+  schematic.appearance = "outline";
+
+  osmBuildings.visible = false;
+  osmTrees.visible = false;
+  meshUtrecht.visible = true;
 });
+
+schematic.addEventListener("click", () => {
+  schematic.appearance = "solid";
+  realistic.appearance = "outline";
+
+  osmBuildings.visible = true;
+  osmTrees.visible = true;
+  meshUtrecht.visible = false;
+});
+
+
 
 window["view"] = view;
