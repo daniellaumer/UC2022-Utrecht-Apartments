@@ -1,6 +1,6 @@
 export default {
-  // server: {
-  //   port: 3000
-  // },
+   server: {
+     port: 3002
+   },
   base: "./"
 }
