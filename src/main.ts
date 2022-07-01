@@ -13,6 +13,7 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 
 import IntegratedMeshLayer from "@arcgis/core/layers/IntegratedMeshLayer";
 import Home from "@arcgis/core/widgets/Home";
+import Basemap from "@arcgis/core/Basemap";
 
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
@@ -117,7 +118,7 @@ let renderer = new UniqueValueRenderer({
 });
 
 const map = new Map({
-  basemap: "topo-vector",
+  basemap: "satellite",
   ground: "world-elevation",
 });
 
@@ -183,6 +184,8 @@ realistic.addEventListener("click", () => {
   osmBuildings.visible = false;
   osmTrees.visible = false;
   meshUtrecht.visible = true;
+
+  map.basemap = Basemap.fromId("satellite")
 });
 
 schematic.addEventListener("click", () => {
@@ -192,6 +195,8 @@ schematic.addEventListener("click", () => {
   osmBuildings.visible = true;
   osmTrees.visible = true;
   meshUtrecht.visible = false;
+
+  map.basemap = Basemap.fromId("topo-vector")
 });
 
 
