@@ -1,26 +1,33 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="initial-scale=1,maximum-scale=1,user-scalable=no"
-    />
-    <title>UC2022 Utrecht Apartments</title>
 
-    <link rel="stylesheet" href="/src/general.scss" />
-  </head>
-  <body>
-    <div id="viewDiv">
-    </div>
-    <div id="selection">
-      <calcite-button id="realistic" appearance="solid"
-        >Realistic</calcite-button
-      >
-      <calcite-button id="schematic" appearance="outline"
-        >Schematic</calcite-button
-      >
-    </div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>UC2022 Utrecht Apartments</title>
+
+  <link rel="stylesheet" href="/src/general.scss" />
+</head>
+
+<body>
+  <div id="viewDiv">
+  </div>
+
+  <calcite-button id="showSketch">Sketch</calcite-button>
+
+  <calcite-button id="showFloors">Floors</calcite-button>
+
+  <calcite-button id="showElevation">Elevate</calcite-button>
+
+  <calcite-button id="showExtrusion">Extrude</calcite-button>
+
+  <calcite-button id="showRenderer">Renderer</calcite-button>
+
+  <div id="selection">
+    <calcite-button id="realistic" appearance="solid">Realistic</calcite-button>
+    <calcite-button id="schematic" appearance="outline">Schematic</calcite-button>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
