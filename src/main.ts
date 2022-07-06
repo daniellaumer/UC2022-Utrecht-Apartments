@@ -129,9 +129,12 @@ realistic.addEventListener("click", () => {
   osmTrees.visible = false;
   meshUtrecht.visible = true;
 
-  apartments.opacity = 0.65;
+  apartments.opacity = 0.75;
 
   map.basemap = Basemap.fromId("satellite");
+
+  
+  view.environment.lighting!.directShadowsEnabled = false;
 });
 
 schematic.addEventListener("click", () => {
@@ -145,6 +148,9 @@ schematic.addEventListener("click", () => {
   apartments.opacity = 1;
 
   map.basemap = Basemap.fromId("topo-vector");
+
+  view.environment.lighting!.directShadowsEnabled = true;
+
 });
 
 /***********************************
@@ -299,7 +305,7 @@ apartments.popupTemplate = new PopupTemplate({
 });
 
 apartments.renderer = rendererSpaceUse;
-apartments.opacity = 0.65;
+apartments.opacity = 0.75;
 
 let spaceUse = document.getElementById("spaceUse") as HTMLCalciteButtonElement;
 let floorArea = document.getElementById("floorArea") as HTMLCalciteButtonElement;
