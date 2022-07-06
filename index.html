@@ -1,29 +1,38 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="initial-scale=1,maximum-scale=1,user-scalable=no"
-    />
-    <title>UC2022 Utrecht Apartments</title>
 
-    
-    <script type="module" crossorigin src="./assets/index.9905b88b.js"></script>
-    <link rel="modulepreload" href="./assets/vendor.4451b4ce.js">
-    <link rel="stylesheet" href="./assets/index.eb83ca7c.css">
-  </head>
-  <body>
-    <div id="viewDiv">
-    </div>
-    <div id="selection">
-      <calcite-button id="realistic" appearance="solid"
-        >Realistic</calcite-button
-      >
-      <calcite-button id="schematic" appearance="outline"
-        >Schematic</calcite-button
-      >
-    </div>
-    
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>UC2022 Utrecht Apartments</title>
+
+  
+  <script type="module" crossorigin src="./assets/index.198dd614.js"></script>
+  <link rel="modulepreload" href="./assets/vendor.5fba8a95.js">
+  <link rel="stylesheet" href="./assets/index.41d1cd23.css">
+</head>
+
+<body>
+  <div id="viewDiv">
+  </div>
+  <div id="visualization" class="container">
+    <h3>Visualization</h3>
+    <calcite-button id="realistic" appearance="solid">Realistic</calcite-button>
+    <calcite-button id="schematic" appearance="outline">Schematic</calcite-button>
+  </div>
+  <div id="renderers" class="container">
+    <h3>Renderer</h3>
+    <calcite-button id="spaceUse" appearance="solid">Space Use</calcite-button>
+    <calcite-button id="floorArea" appearance="outline">Floor area</calcite-button>
+  </div>
+  <div id="filter" class="container">
+    <h3>Filter</h3>
+    <calcite-button id="availability" appearance="outline">Available</calcite-button>
+    <calcite-button id="floorAreaFilter" appearance="outline">Floor area &lt; 1800 m&sup2;</calcite-button>
+
+  </div>
+
+  
+</body>
+
 </html>
