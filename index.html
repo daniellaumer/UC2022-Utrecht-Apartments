@@ -1,37 +1,35 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="initial-scale=1,maximum-scale=1,user-scalable=no"
-    />
-    <title>UC2022 Utrecht Apartments</title>
 
-    <link rel="stylesheet" href="/src/general.scss" />
-  </head>
-  <body>
-    <div id="viewDiv">
-    </div>
-    <div id="renderers" class="container">
-      <calcite-button id="spaceUse" appearance="solid"
-        >Space Use</calcite-button
-      >
-      <calcite-button id="availability" appearance="outline"
-        >Availability</calcite-button
-      >
-      <calcite-button id="floorArea" appearance="outline"
-        >Floor area</calcite-button
-      >
-    </div>
-    <div id="selection" class="container">
-      <calcite-button id="realistic" appearance="solid"
-        >Realistic</calcite-button
-      >
-      <calcite-button id="schematic" appearance="outline"
-        >Schematic</calcite-button
-      >
-    </div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>UC2022 Utrecht Apartments</title>
+
+  <link rel="stylesheet" href="/src/general.scss" />
+</head>
+
+<body>
+  <div id="viewDiv">
+  </div>
+  <div id="visualization" class="container">
+    <h3>Visualization</h3>
+    <calcite-button id="realistic" appearance="solid">Realistic</calcite-button>
+    <calcite-button id="schematic" appearance="outline">Schematic</calcite-button>
+  </div>
+  <div id="renderers" class="container">
+    <h3>Renderer</h3>
+    <calcite-button id="spaceUse" appearance="solid">Space Use</calcite-button>
+    <calcite-button id="floorArea" appearance="outline">Floor area</calcite-button>
+  </div>
+  <div id="filter" class="container">
+    <h3>Filter</h3>
+    <calcite-button id="availability" appearance="outline">Available</calcite-button>
+    <calcite-button id="floorAreaFilter" appearance="outline">Floor area &lt; 1800 m&sup2;</calcite-button>
+
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>

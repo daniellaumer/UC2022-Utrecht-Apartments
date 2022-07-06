@@ -71,6 +71,9 @@ map.add(osmTrees);
 const apartments = new FeatureLayer({
   url: "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Utrecht_Apartments_Data_WFL1/FeatureServer",
   title: "Utrecht Apartments",
+  elevationInfo: {
+    mode: "absolute-height",
+  }
 });
 map.add(apartments);
 
@@ -103,15 +106,16 @@ const view = new SceneView({
 /***********************************
  * Add the UI elements to the view
  ***********************************/
-
-view.ui.add("selection", "bottom-right");
-view.ui.add("renderers", "bottom-right");
 view.ui.add(new Home({ view: view }), "top-left")
-
 view.ui.add(new Expand({ view: view, content: new Legend({ view: view }), expanded: true }), "top-right")
 
+view.ui.add("visualization", "bottom-right");
+view.ui.add("renderers", "bottom-right");
+view.ui.add("filter", "bottom-right");
+
+
 /***********************************
- * Add functionality to the buttons
+ * Add functionality to visualization buttons
  ***********************************/
 
 let realistic = document.getElementById("realistic") as HTMLCalciteButtonElement;
@@ -144,8 +148,9 @@ schematic.addEventListener("click", () => {
 });
 
 /***********************************
- * Define different renderers for the apartment layer
+ * Add functionality to renderer buttons
  ***********************************/
+
 let rendererSpaceUse = new UniqueValueRenderer({
   visualVariables: [
     new SizeVariable({
@@ -232,57 +237,6 @@ let rendererSpaceUse = new UniqueValueRenderer({
   ],
 });
 
-
-let rendererAvailability = new UniqueValueRenderer({
-  visualVariables: [
-    new SizeVariable({
-      field: "FloorHeight_display",
-      valueUnit: "meters",
-    }),
-  ],
-  field: "For_lease",
-  valueExpressionTitle: "Availability",
-  defaultLabel: "Other",
-  uniqueValueInfos: [
-    {
-      label: "Available",
-      symbol: new PolygonSymbol3D({
-        symbolLayers: [
-          new ExtrudeSymbol3DLayer({
-            size: 12,
-            material: {
-              color: [47, 196, 14],
-            },
-            edges: new SolidEdges3D({
-              color: [0, 0, 0],
-              size: 1,
-            }),
-          }),
-        ],
-      }),
-      value: "yes",
-    },
-    {
-      label: "Not available",
-      symbol: new PolygonSymbol3D({
-        symbolLayers: [
-          new ExtrudeSymbol3DLayer({
-            size: 12,
-            material: {
-              color: [189, 189, 189],
-            },
-            edges: new SolidEdges3D({
-              color: [0, 0, 0],
-              size: 1,
-            }),
-          }),
-        ],
-      }),
-      value: "no",
-    }
-  ],
-});
-
 let rendererFloorArea = new ClassBreaksRenderer({
   visualVariables: [
     new SizeVariable({
@@ -296,7 +250,9 @@ let rendererFloorArea = new ClassBreaksRenderer({
         new ColorStop({ value: 1500, color: new Color("#fdbe85") }),
         new ColorStop({ value: 1750, color: new Color("#fd8d3c") }),
         new ColorStop({ value: 1900, color: new Color("#e6550d") }),
-        new ColorStop({ value: 2000, color: new Color("#a63603") })
+        new ColorStop({ value: 2000, color: new Color("#a63603") }),
+        new ColorStop({ value: 5000, color: new Color("#501900") })
+
       ]
     })
   ],
@@ -318,34 +274,6 @@ let rendererFloorArea = new ClassBreaksRenderer({
   }),
 });
 
-/*
-let rendererFloorArea:any = null;
-view.when(() => {
-  colorRendererCreator.createContinuousRenderer({
-    layer: apartments,
-    view:view,
-    field: "Floor_area", 
-    symbolType : "3d-volumetric",
-    theme: "above"
-  }).then((renderer) => {
-    renderer.renderer.visualVariables.push(
-      new SizeVariable({
-        field: "FloorHeight_display",
-        valueUnit: "meters",
-      })),
-    renderer.renderer.visualVariables[0].stops[0] = new ColorStop({value: 1450, color: new Color("#feedde")})
-    renderer.renderer.visualVariables[0].stops[1] = new ColorStop({value: 1500, color: new Color("#fdbe85")})
-    renderer.renderer.visualVariables[0].stops[2] = new ColorStop({value: 1750, color: new Color("#fd8d3c")})
-    renderer.renderer.visualVariables[0].stops[3] = new ColorStop({value: 1900, color: new Color("#e6550d")})
-    renderer.renderer.visualVariables[0].stops[4] = new ColorStop({value: 2000, color: new Color("#a63603")})
-
-
-    rendererFloorArea = renderer.renderer;
-  })
-})
-*/
-
-
 apartments.popupTemplate = new PopupTemplate({
   // autocasts as new PopupTemplate()
   title: "{Building_name}, Level {Level_}",
@@ -362,10 +290,6 @@ apartments.popupTemplate = new PopupTemplate({
           label: "Availability"
         },
         {
-          fieldName: "Elevation",
-          label: "Elevation"
-        },
-        {
           fieldName: "Floor_area",
           label: "Floor area [m]"
         }
@@ -374,39 +298,57 @@ apartments.popupTemplate = new PopupTemplate({
   ]
 });
 
-
-
 apartments.renderer = rendererSpaceUse;
 apartments.opacity = 0.65;
 
 let spaceUse = document.getElementById("spaceUse") as HTMLCalciteButtonElement;
-let availability = document.getElementById("availability") as HTMLCalciteButtonElement;
 let floorArea = document.getElementById("floorArea") as HTMLCalciteButtonElement;
 
 spaceUse.addEventListener("click", () => {
   spaceUse.appearance = "solid";
-  availability.appearance = "outline";
   floorArea.appearance = "outline";
+
   apartments.renderer = rendererSpaceUse;
 });
 
-availability.addEventListener("click", () => {
-  availability.appearance = "solid";
-  spaceUse.appearance = "outline";
-  floorArea.appearance = "outline";
-  apartments.renderer = rendererAvailability;
-
-});
 
 floorArea.addEventListener("click", () => {
   floorArea.appearance = "solid";
   spaceUse.appearance = "outline";
-  availability.appearance = "outline";
 
-  console.log(rendererFloorArea)
   apartments.renderer = rendererFloorArea;
 
 });
 
+/***********************************
+ * Add functionality to filter buttons
+ ***********************************/
+
+let availability = document.getElementById("availability") as HTMLCalciteButtonElement;
+let floorAreaFilter = document.getElementById("floorAreaFilter") as HTMLCalciteButtonElement;
+
+availability.addEventListener("click", () => {
+  if (availability.appearance == "outline") {
+    availability.appearance = "solid";
+    apartments.definitionExpression = "For_lease = 'yes'";
+  }
+  else {
+    availability.appearance = "outline";
+    apartments.definitionExpression = "";
+  }
+  floorAreaFilter.appearance = "outline";
+});
+
+floorAreaFilter.addEventListener("click", () => {
+  if (floorAreaFilter.appearance == "outline") {
+    floorAreaFilter.appearance = "solid";
+    apartments.definitionExpression = "Floor_area < 1800";
+  }
+  else {
+    floorAreaFilter.appearance = "outline";
+    apartments.definitionExpression = "";
+  }
+  availability.appearance = "outline";
+});
 
 window["view"] = view;

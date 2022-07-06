@@ -12,12 +12,17 @@ body,
   display: flex;
   flex-direction: column;
   background-color: white;
+  justify-content: center;
   padding: 10px;
 }
 
 
 calcite-button {
   width: 200px;
+  margin: 5px;
+}
+
+h3 {
   margin: 5px;
 }
 
