@@ -23,10 +23,23 @@
 
   <calcite-button id="showRenderer">Renderer</calcite-button>
 
-  <div id="selection">
+  <div id="visualization" class="container">
+    <h3>Visualization</h3>
     <calcite-button id="realistic" appearance="solid">Realistic</calcite-button>
     <calcite-button id="schematic" appearance="outline">Schematic</calcite-button>
   </div>
+  <div id="renderers" class="container">
+    <h3>Renderer</h3>
+    <calcite-button id="spaceUse" appearance="solid">Space Use</calcite-button>
+    <calcite-button id="floorArea" appearance="outline">Floor area</calcite-button>
+  </div>
+  <div id="filter" class="container">
+    <h3>Filter</h3>
+    <calcite-button id="availability" appearance="outline">Available</calcite-button>
+    <calcite-button id="floorAreaFilter" appearance="outline">Floor area &lt; 1800 m&sup2;</calcite-button>
+
+  </div>
+
   <script type="module" src="/src/main.ts"></script>
 </body>
 
