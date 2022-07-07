@@ -25,23 +25,6 @@ import Color from "@arcgis/core/Color";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import ColorVariable from "@arcgis/core/renderers/visualVariables/ColorVariable";
 
-// setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
-
-// const params = new URLSearchParams(document.location.search.slice(1));
-// const someParam = params.has("someParam");
-
-// IdentityManager.registerOAuthInfos([
-//   new OAuthInfo({
-//     appId: "",
-//     popup: true,
-//     popupCallbackUrl: `${document.location.origin}${document.location.pathname}oauth-callback-api.html`,
-//   }),
-// ]);
-
-// (window as any).setOAuthResponseHash = (responseHash: string) => {
-//   IdentityManager.setOAuthResponseHash(responseHash);
-// };
-
 /***********************************
  * Load and add all the layers
  ***********************************/
