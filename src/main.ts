@@ -25,63 +25,15 @@ import Color from "@arcgis/core/Color";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import ColorVariable from "@arcgis/core/renderers/visualVariables/ColorVariable";
 
-// setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
-
-// const params = new URLSearchParams(document.location.search.slice(1));
-// const someParam = params.has("someParam");
-
-// IdentityManager.registerOAuthInfos([
-//   new OAuthInfo({
-//     appId: "",
-//     popup: true,
-//     popupCallbackUrl: `${document.location.origin}${document.location.pathname}oauth-callback-api.html`,
-//   }),
-// ]);
-
-// (window as any).setOAuthResponseHash = (responseHash: string) => {
-//   IdentityManager.setOAuthResponseHash(responseHash);
-// };
-
 /***********************************
  * Load and add all the layers
  ***********************************/
 
 const map = new Map({
-  basemap: "satellite",
+  basemap: "topo-vector",
   ground: "world-elevation",
 });
 
-const osmBuildings = new SceneLayer({
-  url: "https://basemaps3d.arcgis.com/arcgis/rest/services/OpenStreetMap3D_Buildings_v1/SceneServer",
-  title: "OpenStreetMap Buildings",
-  visible: false,
-  legendEnabled: false,
-  excludeObjectIds: [22244537, 1062063544, 2372497640, 2777335364]
-});
-map.add(osmBuildings);
-
-const osmTrees = new SceneLayer({
-  url: "https://basemaps3d.arcgis.com/arcgis/rest/services/OpenStreetMap3D_Trees_Realistic_v1/SceneServer",
-  title: "OpenStreetMap Trees",
-  visible: false,
-  legendEnabled: false,
-});
-map.add(osmTrees);
-
-const apartments = new FeatureLayer({
-  url: "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Utrecht_Apartments_Data_WFL1/FeatureServer",
-  title: "Utrecht Apartments",
-  elevationInfo: {
-    mode: "absolute-height",
-  }
-});
-map.add(apartments);
-
-const meshUtrecht = new IntegratedMeshLayer({
-  url: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/Utrecht_Buildings_2021/SceneServer",
-  title: "Integrated Mesh Utrecht",
-});
-map.add(meshUtrecht);
 
 const view = new SceneView({
   container: "viewDiv",
@@ -103,9 +55,77 @@ const view = new SceneView({
   qualityProfile: "high",
 });
 
-/***********************************
- * Add the UI elements to the view
- ***********************************/
+const osmBuildings = new SceneLayer({
+  url: "https://basemaps3d.arcgis.com/arcgis/rest/services/OpenStreetMap3D_Buildings_v1/SceneServer",
+  title: "OpenStreetMap Buildings",
+  legendEnabled: false,
+  excludeObjectIds: [22244537, 1062063544, 2372497640, 2777335364]
+});
+map.add(osmBuildings);
+
+const osmTrees = new SceneLayer({
+  url: "https://basemaps3d.arcgis.com/arcgis/rest/services/OpenStreetMap3D_Trees_Realistic_v1/SceneServer",
+  title: "OpenStreetMap Trees",
+  legendEnabled: false,
+});
+map.add(osmTrees);
+
+//***********************************
+//* From 2D to 3D
+//***********************************
+
+const apartments = new FeatureLayer({
+  url: "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Utrecht_Apartments_Data_WFL1/FeatureServer",
+  title: "Utrecht Apartments",
+  elevationInfo: {
+    mode: "absolute-height",
+    offset: 6,
+    featureExpressionInfo: {
+      expression: "$feature.elevation",
+    },
+  },
+});
+map.add(apartments);
+
+
+apartments.popupTemplate = new PopupTemplate({
+  // autocasts as new PopupTemplate()
+  title: "{Building_name}, Level {Level_}",
+  content: [
+    {
+      type: "fields",
+      fieldInfos: [
+        {
+          fieldName: "SpaceUse",
+          label: "Space Use"
+        },
+        {
+          fieldName: "For_lease",
+          label: "Availability"
+        },
+        {
+          fieldName: "Floor_area",
+          label: "Floor area [m]"
+        }
+      ]
+    }
+  ]
+});
+
+/* ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+const meshUtrecht = new IntegratedMeshLayer({
+  url: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/Utrecht_Buildings_2021/SceneServer",
+  title: "Integrated Mesh Utrecht",
+});
+map.add(meshUtrecht);
+
+//***********************************
+//* Add the UI elements to the view
+//***********************************
+
 view.ui.add(new Home({ view: view }), "top-left")
 view.ui.add(new Expand({ view: view, content: new Legend({ view: view }), expanded: true }), "top-right")
 
@@ -114,9 +134,9 @@ view.ui.add("renderers", "bottom-right");
 view.ui.add("filter", "bottom-right");
 
 
-/***********************************
- * Add functionality to visualization buttons
- ***********************************/
+//***********************************
+//* Add functionality to visualization buttons
+//***********************************
 
 let realistic = document.getElementById("realistic") as HTMLCalciteButtonElement;
 let schematic = document.getElementById("schematic") as HTMLCalciteButtonElement;
@@ -153,9 +173,9 @@ schematic.addEventListener("click", () => {
 
 });
 
-/***********************************
- * Add functionality to renderer buttons
- ***********************************/
+//***********************************
+//* Add functionality to renderer buttons
+//***********************************
 
 let rendererSpaceUse = new UniqueValueRenderer({
   visualVariables: [
@@ -326,9 +346,9 @@ floorArea.addEventListener("click", () => {
 
 });
 
-/***********************************
- * Add functionality to filter buttons
- ***********************************/
+//***********************************
+//* Add functionality to filter buttons
+//***********************************
 
 let availability = document.getElementById("availability") as HTMLCalciteButtonElement;
 let floorAreaFilter = document.getElementById("floorAreaFilter") as HTMLCalciteButtonElement;
@@ -356,5 +376,7 @@ floorAreaFilter.addEventListener("click", () => {
   }
   availability.appearance = "outline";
 });
+
+*/ ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 window["view"] = view;
