@@ -19,7 +19,6 @@ import IntegratedMeshLayer from "@arcgis/core/layers/IntegratedMeshLayer";
 import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
 import { FillSymbol3DLayer } from "@arcgis/core/symbols";
 import Expand from "@arcgis/core/widgets/Expand";
-import Home from "@arcgis/core/widgets/Home";
 
 import LayerList from "@arcgis/core/widgets/LayerList";
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
@@ -27,10 +26,14 @@ import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import PopupTemplate from "@arcgis/core/PopupTemplate";
 
 
+import Camera from "@arcgis/core/Camera";
+import GroupLayer from "@arcgis/core/layers/GroupLayer";
+import { SimpleRenderer } from "@arcgis/core/renderers";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import ColorVariable from "@arcgis/core/renderers/visualVariables/ColorVariable";
 import ColorStop from "@arcgis/core/renderers/visualVariables/support/ColorStop";
 import Legend from "@arcgis/core/widgets/Legend";
+import LineOfSight from "@arcgis/core/widgets/LineOfSight";
 
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
@@ -60,12 +63,11 @@ const map = new Map({
 
 const osmBuildings = new SceneLayer({
   url: "https://basemaps3d.arcgis.com/arcgis/rest/services/OpenStreetMap3D_Buildings_v1/SceneServer",
-  title: "OpenStreetMap Buildings",
+  title: "OpenStreetMap",
   visible: true,
   legendEnabled: false,
   // excludeObjectIds: [22244537, 1062063544, 2372497640, 2777335364]
 });
-map.add(osmBuildings);
 
 const osmTrees = new SceneLayer({
   url: "https://basemaps3d.arcgis.com/arcgis/rest/services/OpenStreetMap3D_Trees_Realistic_v1/SceneServer",
@@ -73,24 +75,41 @@ const osmTrees = new SceneLayer({
   visible: false,
   legendEnabled: false,
 });
-map.add(osmTrees);
+// map.add(osmTrees);
 
 const apartments = new FeatureLayer({
   url: "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Utrecht_Apartments_Data_WFL1/FeatureServer",
   title: "Utrecht Apartments",
   elevationInfo: {
-    mode: "absolute-height",
+    mode: "on-the-ground",
   },
   visible: false,
 });
-map.add(apartments);
 
 const meshUtrecht = new IntegratedMeshLayer({
-  url: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/Utrecht_Buildings_2021/SceneServer",
-  title: "Integrated Mesh Utrecht",
   visible: false,
+  url: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/Utrecht_Buildings_2021/SceneServer",
+  title: "Integrated Mesh",
 });
-map.add(meshUtrecht);
+
+const group = new GroupLayer({
+  title: "Buildings",
+  visibilityMode: "exclusive",
+  layers: [meshUtrecht, osmBuildings]
+});
+
+osmBuildings.watch("visible", () => {
+  map.basemap = Basemap.fromId("topo-vector");
+  apartments.opacity = 1;
+});
+
+meshUtrecht.watch("visible", () => {
+  map.basemap = Basemap.fromId("satellite");
+  apartments.opacity = 0.7;
+});
+
+map.add(group);
+map.add(apartments);
 
 const view = new SceneView({
   container: "viewDiv",
@@ -118,8 +137,36 @@ const view = new SceneView({
 /***********************************
  * Add the UI elements to the view
  ***********************************/
-view.ui.add(new Home({ view: view }), "top-left")
-view.ui.add(new Expand({ view: view, content: new Legend({ view: view }), expanded: true }), "top-right")
+// view.ui.add(new Home({ view: view }), "top-left")
+const legend = new Expand({ view: view, group: "tools", content: new Legend({ view: view }) });
+view.ui.add(legend, "top-right");
+
+view.ui.add(new Expand({
+  view,
+  group: "tools",
+  content: new LayerList({ view }),
+}), "top-right");
+
+const los = new Expand({
+  view,
+  group: "tools",
+  content: new LineOfSight({ view })
+})
+view.ui.add(los, "top-right");
+
+los.watch("expanded", () => {
+  if (!los.expanded) {
+    view.goTo(new Camera({
+      position: {
+        x: 5.11412623,
+        y: 52.08525598,
+        z: 12.81920,
+      },
+      heading: 318.69,
+      tilt: 87.74
+    }));
+  }
+})
 
 view.ui.add("visualization", "bottom-right");
 view.ui.add("renderers", "bottom-right");
@@ -163,13 +210,46 @@ schematic.addEventListener("click", () => {
  * Add functionality to renderer buttons
  ***********************************/
 
+const visualVariables = [
+  new SizeVariable({
+    // field: "FloorHeight_display",
+    valueUnit: "meters",
+    valueExpression: "When($feature.Building_name == 'Stadskantoor', 3.3, 2.65)"
+  }),
+];
+
+const flatFloorRenderer = new SimpleRenderer({
+  symbol: new PolygonSymbol3D({
+    symbolLayers: [new FillSymbol3DLayer({
+      material: {
+        color: "#9868ed"
+      },
+      outline: {
+        color: "white",
+        size: 1
+      }
+    })]
+  })
+});
+
+const extrudedFloorRenderer = new SimpleRenderer({
+  visualVariables,
+  symbol: new PolygonSymbol3D({
+    symbolLayers: [new ExtrudeSymbol3DLayer({
+      size: 3.5,
+      material: {
+        color: "#9868ed"
+      },
+      edges: new SolidEdges3D({
+        color: "white",
+        size: 1
+      }),
+    })]
+  })
+});
+
 let rendererSpaceUse = new UniqueValueRenderer({
-  visualVariables: [
-    new SizeVariable({
-      field: "FloorHeight_display",
-      valueUnit: "meters",
-    }),
-  ],
+  visualVariables,
   field: "SpaceUse",
   valueExpressionTitle: "Space Use",
   defaultLabel: "Other",
@@ -179,7 +259,7 @@ let rendererSpaceUse = new UniqueValueRenderer({
       symbol: new PolygonSymbol3D({
         symbolLayers: [
           new ExtrudeSymbol3DLayer({
-            size: 12,
+            size: 3.5,
             material: {
               color: [115, 178, 255],
             },
@@ -197,7 +277,7 @@ let rendererSpaceUse = new UniqueValueRenderer({
       symbol: new PolygonSymbol3D({
         symbolLayers: [
           new ExtrudeSymbol3DLayer({
-            size: 12,
+            size: 3.5,
             material: {
               color: [255, 238, 101],
             },
@@ -215,7 +295,7 @@ let rendererSpaceUse = new UniqueValueRenderer({
       symbol: new PolygonSymbol3D({
         symbolLayers: [
           new ExtrudeSymbol3DLayer({
-            size: 12,
+            size: 3.5,
             material: {
               color: [189, 126, 190],
             },
@@ -233,7 +313,7 @@ let rendererSpaceUse = new UniqueValueRenderer({
       symbol: new PolygonSymbol3D({
         symbolLayers: [
           new ExtrudeSymbol3DLayer({
-            size: 12,
+            size: 3.5,
             material: {
               color: [253, 127, 111],
             },
@@ -305,6 +385,10 @@ apartments.popupTemplate = new PopupTemplate({
         {
           fieldName: "Floor_area",
           label: "Floor area [m]"
+        },
+        {
+          fieldName: "Level_",
+          label: "Level"
         }
       ]
     }
@@ -314,8 +398,8 @@ apartments.popupTemplate = new PopupTemplate({
 
 
 
-apartments.renderer = rendererSpaceUse;
-apartments.opacity = 0.65;
+apartments.renderer = flatFloorRenderer;
+// apartments.opacity = 0.65;
 
 let spaceUse = document.getElementById("spaceUse") as HTMLCalciteButtonElement;
 let floorArea = document.getElementById("floorArea") as HTMLCalciteButtonElement;
@@ -326,8 +410,6 @@ spaceUse.addEventListener("click", () => {
   floorArea.appearance = "outline";
   apartments.renderer = rendererSpaceUse;
 });
-
-view.ui.add(new Home({ view: view }), "top-left");
 
 floorArea.addEventListener("click", () => {
   floorArea.appearance = "solid";
@@ -369,18 +451,11 @@ floorAreaFilter.addEventListener("click", () => {
 });
 
 
-view.ui.add(new Expand({
-  view,
-  content: new LayerList({ view }),
-}), "top-right");
-
-
 
 /*
  * Plenary steps
 */
 const showSketchBtn = document.getElementById("showSketch") as HTMLCalciteButtonElement;
-const showFloorsBtn = document.getElementById("showFloors") as HTMLCalciteButtonElement;
 const showElevationBtn = document.getElementById("showElevation") as HTMLCalciteButtonElement;
 const showExtrusionBtn = document.getElementById("showExtrusion") as HTMLCalciteButtonElement;
 const showRendererBtn = document.getElementById("showRenderer") as HTMLCalciteButtonElement;
@@ -401,13 +476,11 @@ const svm = new SketchViewModel({
     ]
   }),
   layer: new GraphicsLayer({
+    listMode: "hide",
     elevationInfo: {
       mode: "on-the-ground"
     }
-  }),
-  defaultCreateOptions: {
-
-  }
+  })
 });
 view.highlightOptions.color = new Color([250, 130, 6, 0.25]);
 view.highlightOptions.haloColor = new Color([250, 130, 6, 1]);
@@ -478,9 +551,26 @@ view.whenLayerView(osmBuildings).then((lv) => {
 });
 
 
+showElevationBtn.onclick = () => {
+  apartments.elevationInfo = {
+    mode: "absolute-height",
+    offset: 4,
+    featureExpressionInfo: {
+      expression: "($feature.Level_ - 1) * When($feature.Building_name == 'Stadskantoor', 3.65, 3)",
+    }
+  }
+};
+
+showExtrusionBtn.onclick = () => {
+  apartments.renderer = extrudedFloorRenderer;
+};
+
+showRendererBtn.onclick = () => {
+  apartments.renderer = rendererSpaceUse;
+  legend.expanded = true;
+}
 
 view.ui.add(showSketchBtn, "bottom-left");
-view.ui.add(showFloorsBtn, "bottom-left");
 view.ui.add(showElevationBtn, "bottom-left");
 view.ui.add(showExtrusionBtn, "bottom-left");
 view.ui.add(showRendererBtn, "bottom-left");
