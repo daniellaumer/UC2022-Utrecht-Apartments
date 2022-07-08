@@ -24,6 +24,8 @@ import ColorStop from "@arcgis/core/renderers/visualVariables/support/ColorStop"
 import Color from "@arcgis/core/Color";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import ColorVariable from "@arcgis/core/renderers/visualVariables/ColorVariable";
+import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
+import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
 
 /***********************************
  * Load and add all the layers
@@ -71,7 +73,7 @@ const osmTrees = new SceneLayer({
 map.add(osmTrees);
 
 //***********************************
-//* From 2D to 3D
+//* Step 1: z-values
 //***********************************
 
 const apartments = new FeatureLayer({
@@ -85,9 +87,6 @@ const apartments = new FeatureLayer({
     },
   },
 });
-map.add(apartments);
-
-
 apartments.popupTemplate = new PopupTemplate({
   // autocasts as new PopupTemplate()
   title: "{Building_name}, Level {Level_}",
@@ -112,15 +111,206 @@ apartments.popupTemplate = new PopupTemplate({
   ]
 });
 
-/* ///////////////////////////////////////////////////////////////////////////////////////////////////
+map.add(apartments);
 
 
+//***********************************
+//* Step 2: Unique Value Renderer
+//***********************************
+
+let uniqueValueRenderer = new UniqueValueRenderer({
+  field: "SpaceUse",
+  valueExpressionTitle: "Space Use",
+  defaultLabel: "Other",
+  uniqueValueInfos: [
+    {
+      label: "Office",
+      symbol: new PolygonSymbol3D({
+        symbolLayers: [
+          new FillSymbol3DLayer({
+            material: {
+              color: [115, 178, 255],
+            },
+            outline: {
+              color: [0, 0, 0],
+              size: 0.5,
+            },
+          }),
+        ],
+      }),
+      value: "Office",
+    },
+    {
+      label: "Residential",
+      symbol: new PolygonSymbol3D({
+        symbolLayers: [
+          new FillSymbol3DLayer({
+            material: {
+              color: [255, 238, 101],
+            },
+            outline: {
+              color: [0, 0, 0],
+              size: 0.5,
+            },
+          }),
+        ],
+      }),
+      value: "MF Residential",
+    },
+    {
+      label: "Hotel",
+      symbol: new PolygonSymbol3D({
+        symbolLayers: [
+          new FillSymbol3DLayer({
+            material: {
+              color: [189, 126, 190],
+            },
+            outline: {
+              color: [0, 0, 0],
+              size: 0.5,
+            },
+          }),
+        ],
+      }),
+      value: "Hotel",
+    },
+    {
+      label: "Retail",
+      symbol: new PolygonSymbol3D({
+        symbolLayers: [
+          new FillSymbol3DLayer({
+            material: {
+              color: [253, 127, 111],
+            },
+            outline: {
+              color: [0, 0, 0],
+              size: 0.5,
+            },
+          }),
+        ],
+      }),
+      value: "Retail",
+    },
+  ],
+});
+
+//apartments.renderer = uniqueValueRenderer;
+
+
+//***********************************
+//* Step 3: Extrusion
+//***********************************
+
+let rendererExtruded = new UniqueValueRenderer({
+  visualVariables: [
+    new SizeVariable({
+      field: "FloorHeight_display",
+      valueUnit: "meters",
+    }),
+  ],
+  field: "SpaceUse",
+  valueExpressionTitle: "Space Use",
+  defaultLabel: "Other",
+  uniqueValueInfos: [
+    {
+      label: "Office",
+      symbol: new PolygonSymbol3D({
+        symbolLayers: [
+          new ExtrudeSymbol3DLayer({
+            size: 12,
+            material: {
+              color: [115, 178, 255],
+            },
+            edges: new SolidEdges3D({
+              color: [0, 0, 0],
+              size: 1,
+            }),
+          }),
+        ],
+      }),
+      value: "Office",
+    },
+    {
+      label: "Residential",
+      symbol: new PolygonSymbol3D({
+        symbolLayers: [
+          new ExtrudeSymbol3DLayer({
+            size: 12,
+            material: {
+              color: [255, 238, 101],
+            },
+            edges: new SolidEdges3D({
+              color: [0, 0, 0],
+              size: 1,
+            }),
+          }),
+        ],
+      }),
+      value: "MF Residential",
+    },
+    {
+      label: "Hotel",
+      symbol: new PolygonSymbol3D({
+        symbolLayers: [
+          new ExtrudeSymbol3DLayer({
+            size: 12,
+            material: {
+              color: [189, 126, 190],
+            },
+            edges: new SolidEdges3D({
+              color: [0, 0, 0],
+              size: 1,
+            }),
+          }),
+        ],
+      }),
+      value: "Hotel",
+    },
+    {
+      label: "Retail",
+      symbol: new PolygonSymbol3D({
+        symbolLayers: [
+          new ExtrudeSymbol3DLayer({
+            size: 12,
+            material: {
+              color: [253, 127, 111],
+            },
+            edges: new SolidEdges3D({
+              color: [0, 0, 0],
+              size: 1,
+            }),
+          }),
+        ],
+      }),
+      value: "Retail",
+    },
+  ],
+});
+
+//apartments.renderer = rendererExtruded;
+
+
+
+//***********************************
+//* Step 4: Filtering
+//***********************************
+
+//apartments.definitionExpression = "For_lease = 'yes'";
+
+//apartments.definitionExpression = "Floor_area < 1800";
+
+//***********************************
+//* Step 5: Final app
+//***********************************
 
 const meshUtrecht = new IntegratedMeshLayer({
   url: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/Utrecht_Buildings_2021/SceneServer",
   title: "Integrated Mesh Utrecht",
+  visible: false
 });
 map.add(meshUtrecht);
+
+//finalizeApp()
 
 //***********************************
 //* Add the UI elements to the view
@@ -176,7 +366,6 @@ schematic.addEventListener("click", () => {
 //***********************************
 //* Add functionality to renderer buttons
 //***********************************
-
 let rendererSpaceUse = new UniqueValueRenderer({
   visualVariables: [
     new SizeVariable({
@@ -263,6 +452,7 @@ let rendererSpaceUse = new UniqueValueRenderer({
   ],
 });
 
+
 let rendererFloorArea = new ClassBreaksRenderer({
   visualVariables: [
     new SizeVariable({
@@ -299,33 +489,6 @@ let rendererFloorArea = new ClassBreaksRenderer({
     ]
   }),
 });
-
-apartments.popupTemplate = new PopupTemplate({
-  // autocasts as new PopupTemplate()
-  title: "{Building_name}, Level {Level_}",
-  content: [
-    {
-      type: "fields",
-      fieldInfos: [
-        {
-          fieldName: "SpaceUse",
-          label: "Space Use"
-        },
-        {
-          fieldName: "For_lease",
-          label: "Availability"
-        },
-        {
-          fieldName: "Floor_area",
-          label: "Floor area [m]"
-        }
-      ]
-    }
-  ]
-});
-
-apartments.renderer = rendererSpaceUse;
-apartments.opacity = 0.75;
 
 let spaceUse = document.getElementById("spaceUse") as HTMLCalciteButtonElement;
 let floorArea = document.getElementById("floorArea") as HTMLCalciteButtonElement;
@@ -377,6 +540,21 @@ floorAreaFilter.addEventListener("click", () => {
   availability.appearance = "outline";
 });
 
-*/ ///////////////////////////////////////////////////////////////////////////////////////////////////
+function finalizeApp() {
+  apartments.renderer = rendererExtruded;
 
+  apartments.opacity = 0.75;
+  map.basemap = Basemap.fromId("satellite");
+
+  meshUtrecht.visible = true;
+  osmBuildings.visible = false;
+  osmTrees.visible = false;
+
+  apartments.definitionExpression = "";
+
+  document.getElementById("visualization")!.style.display = "flex";
+  document.getElementById("renderers")!.style.display = "flex";
+  document.getElementById("filter")!.style.display = "flex";
+
+}
 window["view"] = view;
