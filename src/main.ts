@@ -26,6 +26,16 @@ import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import ColorVariable from "@arcgis/core/renderers/visualVariables/ColorVariable";
 import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
 import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
+import { toEditorSettings } from "typescript";
+import Editor from "@arcgis/core/widgets/Editor";
+import SketchTooltipOptions from "@arcgis/core/views/interactive/sketch/SketchTooltipOptions";
+
+
+
+
+
+
+
 
 /***********************************
  * Load and add all the layers
@@ -73,7 +83,7 @@ const osmTrees = new SceneLayer({
 map.add(osmTrees);
 
 //***********************************
-//* Step 1: z-values
+//* Step 1: z-values: Attribute driven
 //***********************************
 
 const apartments = new FeatureLayer({
@@ -81,7 +91,6 @@ const apartments = new FeatureLayer({
   title: "Utrecht Apartments",
   elevationInfo: {
     mode: "absolute-height",
-    offset: 6,
     featureExpressionInfo: {
       expression: "$feature.elevation",
     },
@@ -113,9 +122,26 @@ apartments.popupTemplate = new PopupTemplate({
 
 map.add(apartments);
 
+//***********************************
+//* Step 2: z-values: Existing geometry
+//***********************************
+
+//apartments.elevationInfo = { mode: "absolute-height"};
+
 
 //***********************************
-//* Step 2: Unique Value Renderer
+//* Step 3: Editor
+//***********************************
+
+let editor = new Editor({
+  view:view,
+  tooltipOptions: new SketchTooltipOptions({
+    enabled: true
+  })
+})
+
+//***********************************
+//* Step 4: Unique Value Renderer
 //***********************************
 
 let uniqueValueRenderer = new UniqueValueRenderer({
@@ -198,7 +224,7 @@ let uniqueValueRenderer = new UniqueValueRenderer({
 
 
 //***********************************
-//* Step 3: Extrusion
+//* Step 5: Extrusion
 //***********************************
 
 let rendererExtruded = new UniqueValueRenderer({
@@ -290,17 +316,8 @@ let rendererExtruded = new UniqueValueRenderer({
 //apartments.renderer = rendererExtruded;
 
 
-
 //***********************************
-//* Step 4: Filtering
-//***********************************
-
-//apartments.definitionExpression = "For_lease = 'yes'";
-
-//apartments.definitionExpression = "Floor_area < 1800";
-
-//***********************************
-//* Step 5: Final app
+//* Step 6: Final app
 //***********************************
 
 const meshUtrecht = new IntegratedMeshLayer({
@@ -312,12 +329,16 @@ map.add(meshUtrecht);
 
 //finalizeApp()
 
+
+
 //***********************************
 //* Add the UI elements to the view
 //***********************************
 
 view.ui.add(new Home({ view: view }), "top-left")
-view.ui.add(new Expand({ view: view, content: new Legend({ view: view }), expanded: true }), "top-right")
+view.ui.add(new Expand({ view: view, group: "top-right", content: new Legend({ view: view }), expanded: true }), "top-right");
+view.ui.add(new Expand({ view: view, group: "top-right", content: editor}), "top-right");
+
 
 view.ui.add("visualization", "bottom-right");
 view.ui.add("renderers", "bottom-right");
