@@ -35,23 +35,6 @@ import ColorStop from "@arcgis/core/renderers/visualVariables/support/ColorStop"
 import Legend from "@arcgis/core/widgets/Legend";
 import LineOfSight from "@arcgis/core/widgets/LineOfSight";
 
-// setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
-
-// const params = new URLSearchParams(document.location.search.slice(1));
-// const someParam = params.has("someParam");
-
-// IdentityManager.registerOAuthInfos([
-//   new OAuthInfo({
-//     appId: "",
-//     popup: true,
-//     popupCallbackUrl: `${document.location.origin}${document.location.pathname}oauth-callback-api.html`,
-//   }),
-// ]);
-
-// (window as any).setOAuthResponseHash = (responseHash: string) => {
-//   IdentityManager.setOAuthResponseHash(responseHash);
-// };
-
 /***********************************
  * Load and add all the layers
  ***********************************/
@@ -195,9 +178,12 @@ realistic.addEventListener("click", () => {
   osmTrees.visible = false;
   meshUtrecht.visible = true;
 
-  apartments.opacity = 0.65;
+  apartments.opacity = 0.75;
 
   map.basemap = Basemap.fromId("satellite");
+
+
+  view.environment.lighting!.directShadowsEnabled = false;
 });
 
 schematic.addEventListener("click", () => {
@@ -211,6 +197,9 @@ schematic.addEventListener("click", () => {
   apartments.opacity = 1;
 
   map.basemap = Basemap.fromId("topo-vector");
+
+  view.environment.lighting!.directShadowsEnabled = true;
+
 });
 
 /***********************************
@@ -402,11 +391,12 @@ apartments.popupTemplate = new PopupTemplate({
   ]
 });
 
-
-
-
-apartments.renderer = flatFloorRenderer;
+// apartments.renderer = flatFloorRenderer;
 // apartments.opacity = 0.65;
+
+apartments.renderer = rendererSpaceUse;
+apartments.opacity = 0.75;
+
 
 let spaceUse = document.getElementById("spaceUse") as HTMLCalciteButtonElement;
 let floorArea = document.getElementById("floorArea") as HTMLCalciteButtonElement;
