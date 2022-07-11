@@ -147,24 +147,31 @@ view.ui.add(new Expand({
   content: new LayerList({ view }),
 }), "top-right");
 
+const lineofsight = new LineOfSight({ view });
+
 const los = new Expand({
   view,
   group: "tools",
-  content: new LineOfSight({ view })
+  content: lineofsight
 })
 view.ui.add(los, "top-right");
 
-los.watch("expanded", () => {
+los.watch("expanded", async () => {
   if (!los.expanded) {
+
+    lineofsight.viewModel.clear();
+
     view.goTo(new Camera({
       position: {
-        x: 5.11412623,
-        y: 52.08525598,
-        z: 12.81920,
+        x: 5.11417868,
+        y: 52.08521220,
+        z: 13.60010,
       },
-      heading: 318.69,
-      tilt: 87.74
+      heading: 320.60,
+      tilt: 89.34
     }));
+
+
   }
 })
 
