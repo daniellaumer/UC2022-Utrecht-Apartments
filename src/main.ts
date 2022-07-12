@@ -29,6 +29,8 @@ import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
 import { toEditorSettings } from "typescript";
 import Editor from "@arcgis/core/widgets/Editor";
 import SketchTooltipOptions from "@arcgis/core/views/interactive/sketch/SketchTooltipOptions";
+import WebScene from "@arcgis/core/WebScene";
+import Collection from "@arcgis/core/core/Collection";
 
 
 
@@ -41,15 +43,18 @@ import SketchTooltipOptions from "@arcgis/core/views/interactive/sketch/SketchTo
  * Load and add all the layers
  ***********************************/
 
-const map = new Map({
-  basemap: "topo-vector",
-  ground: "world-elevation",
+const scene = new WebScene({
+  portalItem: {
+    // OSM 3D buildings and trees
+    id: "037cceb0e24440179dbd00846d2a8c4f",
+  }
 });
+
 
 
 const view = new SceneView({
   container: "viewDiv",
-  map: map,
+  map: scene,
   camera: {
     position: {
       longitude: 5.10323513,
@@ -67,35 +72,19 @@ const view = new SceneView({
   qualityProfile: "high",
 });
 
-const osmBuildings = new SceneLayer({
-  url: "https://basemaps3d.arcgis.com/arcgis/rest/services/OpenStreetMap3D_Buildings_v1/SceneServer",
-  title: "OpenStreetMap Buildings",
-  legendEnabled: false,
-  excludeObjectIds: [22244537, 1062063544, 2372497640, 2777335364]
-});
-map.add(osmBuildings);
-
-const osmTrees = new SceneLayer({
-  url: "https://basemaps3d.arcgis.com/arcgis/rest/services/OpenStreetMap3D_Trees_Realistic_v1/SceneServer",
-  title: "OpenStreetMap Trees",
-  legendEnabled: false,
-});
-map.add(osmTrees);
 
 //***********************************
-//* Step 1: z-values: Attribute driven
+//* Loading layer
 //***********************************
 
 const apartments = new FeatureLayer({
   url: "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Utrecht_Apartments_Data_WFL1/FeatureServer",
   title: "Utrecht Apartments",
   elevationInfo: {
-    mode: "absolute-height",
-    featureExpressionInfo: {
-      expression: "$feature.elevation",
-    },
+    mode: "on-the-ground",
   },
 });
+
 apartments.popupTemplate = new PopupTemplate({
   // autocasts as new PopupTemplate()
   title: "{Building_name}, Level {Level_}",
@@ -120,28 +109,44 @@ apartments.popupTemplate = new PopupTemplate({
   ]
 });
 
-map.add(apartments);
-
-//***********************************
-//* Step 2: z-values: Existing geometry
-//***********************************
-
-//apartments.elevationInfo = { mode: "absolute-height"};
+// view.map.add(apartments);
 
 
 //***********************************
-//* Step 3: Editor
+//* Step 2: z-values: Attribut driven
+//***********************************
+
+// apartments.elevationInfo = {
+//   mode: "absolute-height",
+//   offset: 6,
+//   featureExpressionInfo: {
+//     expression: "$feature.Level_ * 3.5",
+//   }
+// };
+
+
+//***********************************
+//* Step 3: z-values: Existing geometry
+//***********************************
+
+// apartments.elevationInfo = { mode: "absolute-height" };
+
+
+//***********************************
+//* Step 4: Editor
 //***********************************
 
 let editor = new Editor({
-  view:view,
+  view: view,
   tooltipOptions: new SketchTooltipOptions({
     enabled: true
   })
-})
+});
+view.ui.add(new Expand({ view: view, group: "top-right", content: editor }), "top-right");
+
 
 //***********************************
-//* Step 4: Unique Value Renderer
+//* Step 5: Unique Value Renderer
 //***********************************
 
 let uniqueValueRenderer = new UniqueValueRenderer({
@@ -220,11 +225,11 @@ let uniqueValueRenderer = new UniqueValueRenderer({
   ],
 });
 
-//apartments.renderer = uniqueValueRenderer;
+// apartments.renderer = uniqueValueRenderer;
 
 
 //***********************************
-//* Step 5: Extrusion
+//* Step 6: Extrusion
 //***********************************
 
 let rendererExtruded = new UniqueValueRenderer({
@@ -313,11 +318,11 @@ let rendererExtruded = new UniqueValueRenderer({
   ],
 });
 
-//apartments.renderer = rendererExtruded;
+// apartments.renderer = rendererExtruded;
 
 
 //***********************************
-//* Step 6: Final app
+//* Step 7: Final app
 //***********************************
 
 const meshUtrecht = new IntegratedMeshLayer({
@@ -325,9 +330,9 @@ const meshUtrecht = new IntegratedMeshLayer({
   title: "Integrated Mesh Utrecht",
   visible: false
 });
-map.add(meshUtrecht);
+view.map.add(meshUtrecht);
 
-//finalizeApp()
+// finalizeApp()
 
 
 
@@ -336,14 +341,16 @@ map.add(meshUtrecht);
 //***********************************
 
 view.ui.add(new Home({ view: view }), "top-left")
-view.ui.add(new Expand({ view: view, group: "top-right", content: new Legend({ view: view }), expanded: true }), "top-right");
-view.ui.add(new Expand({ view: view, group: "top-right", content: editor}), "top-right");
+let legend = new Expand({ view: view, group: "top-right", content: new Legend({ view: view }), expanded: false })
+view.ui.add(legend, "top-right");
 
 
 view.ui.add("visualization", "bottom-right");
 view.ui.add("renderers", "bottom-right");
 view.ui.add("filter", "bottom-right");
 
+let osmBuildings: SceneLayer;;
+let osmTrees: SceneLayer;
 
 //***********************************
 //* Add functionality to visualization buttons
@@ -362,10 +369,17 @@ realistic.addEventListener("click", () => {
 
   apartments.opacity = 0.75;
 
-  map.basemap = Basemap.fromId("satellite");
+  view.map.basemap = Basemap.fromId("satellite");
 
-  
+
   view.environment.lighting!.directShadowsEnabled = false;
+  let defExpression = apartments.definitionExpression
+  setTimeout(() => {
+    apartments.definitionExpression = "For_lease = ''";
+    setTimeout(() => {
+      apartments.definitionExpression = defExpression;
+    }, 500)  
+  }, 500)
 });
 
 schematic.addEventListener("click", () => {
@@ -378,7 +392,7 @@ schematic.addEventListener("click", () => {
 
   apartments.opacity = 1;
 
-  map.basemap = Basemap.fromId("topo-vector");
+  view.map.basemap = Basemap.fromId("topo-vector");
 
   view.environment.lighting!.directShadowsEnabled = true;
 
@@ -561,21 +575,48 @@ floorAreaFilter.addEventListener("click", () => {
   availability.appearance = "outline";
 });
 
+
+
 function finalizeApp() {
-  apartments.renderer = rendererExtruded;
+  scene.loadAll().then(() => {
 
-  apartments.opacity = 0.75;
-  map.basemap = Basemap.fromId("satellite");
+    osmBuildings = (scene.allLayers.find((layer) => {
+      return layer.title === "OpenStreetMap 3D Buildings"
+    }) as SceneLayer)
 
-  meshUtrecht.visible = true;
-  osmBuildings.visible = false;
-  osmTrees.visible = false;
 
-  apartments.definitionExpression = "";
+    osmBuildings.legendEnabled = false,
+      osmBuildings.excludeObjectIds = new Collection([22244537, 1062063544, 2372497640, 2777335364]);
 
-  document.getElementById("visualization")!.style.display = "flex";
-  document.getElementById("renderers")!.style.display = "flex";
-  document.getElementById("filter")!.style.display = "flex";
+    osmTrees = (scene.allLayers.find((layer) => {
+      return layer.title === "OpenStreetMap 3D Trees"
+    }) as SceneLayer)
+    osmTrees.legendEnabled = false;
+
+    let hillshade = (scene.allLayers.find((layer) => {
+      return layer.title === "World Hillshade"
+    }) as SceneLayer);
+    hillshade.visible = false;
+
+
+
+    apartments.renderer = rendererExtruded;
+
+    apartments.opacity = 1;
+    view.map.basemap = Basemap.fromId("");
+
+    meshUtrecht.visible = false;
+    osmBuildings.visible = true;
+    osmTrees.visible = true;
+
+    apartments.definitionExpression = "";
+
+    document.getElementById("visualization")!.style.display = "flex";
+    document.getElementById("renderers")!.style.display = "flex";
+    document.getElementById("filter")!.style.display = "flex";
+
+    legend.expanded = true;
+  })
 
 }
 window["view"] = view;
