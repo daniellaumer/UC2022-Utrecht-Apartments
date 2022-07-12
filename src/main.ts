@@ -51,7 +51,6 @@ const scene = new WebScene({
 });
 
 
-
 const view = new SceneView({
   container: "viewDiv",
   map: scene,
@@ -72,9 +71,34 @@ const view = new SceneView({
   qualityProfile: "high",
 });
 
+//***********************************
+//* Excluding some buildings
+//***********************************
+
+scene.loadAll().then(() => {
+
+  osmTrees = (scene.allLayers.find((layer) => {
+    return layer.title === "OpenStreetMap 3D Trees"
+  }) as SceneLayer)
+  osmTrees.legendEnabled = false;
+
+  let hillshade = (scene.allLayers.find((layer) => {
+    return layer.title === "World Hillshade"
+  }) as SceneLayer);
+  hillshade.visible = false;
+
+  osmBuildings = (scene.allLayers.find((layer) => {
+    return layer.title === "OpenStreetMap 3D Buildings"
+  }) as SceneLayer)
+
+
+  osmBuildings.legendEnabled = false,
+  osmBuildings.excludeObjectIds = new Collection([22244537, 1062063544, 2372497640, 2777335364]);
+});
+
 
 //***********************************
-//* Loading layer
+//* Step 1: Loading apartment layer
 //***********************************
 
 const apartments = new FeatureLayer({
@@ -103,6 +127,18 @@ apartments.popupTemplate = new PopupTemplate({
         {
           fieldName: "Floor_area",
           label: "Floor area [m]"
+        },
+        {
+          fieldName: "Level_",
+          label: "Level"
+        },
+        {
+          fieldName: "FloorHeight_display",
+          label: "Floor height [m]",
+          format: {
+            digitSeparator: false,
+            places: 1
+          }
         }
       ]
     }
@@ -378,7 +414,7 @@ realistic.addEventListener("click", () => {
     apartments.definitionExpression = "For_lease = ''";
     setTimeout(() => {
       apartments.definitionExpression = defExpression;
-    }, 500)  
+    }, 500)
   }, 500)
 });
 
@@ -576,29 +612,8 @@ floorAreaFilter.addEventListener("click", () => {
 });
 
 
-
 function finalizeApp() {
   scene.loadAll().then(() => {
-
-    osmBuildings = (scene.allLayers.find((layer) => {
-      return layer.title === "OpenStreetMap 3D Buildings"
-    }) as SceneLayer)
-
-
-    osmBuildings.legendEnabled = false,
-      osmBuildings.excludeObjectIds = new Collection([22244537, 1062063544, 2372497640, 2777335364]);
-
-    osmTrees = (scene.allLayers.find((layer) => {
-      return layer.title === "OpenStreetMap 3D Trees"
-    }) as SceneLayer)
-    osmTrees.legendEnabled = false;
-
-    let hillshade = (scene.allLayers.find((layer) => {
-      return layer.title === "World Hillshade"
-    }) as SceneLayer);
-    hillshade.visible = false;
-
-
 
     apartments.renderer = rendererExtruded;
 
@@ -606,8 +621,6 @@ function finalizeApp() {
     view.map.basemap = Basemap.fromId("");
 
     meshUtrecht.visible = false;
-    osmBuildings.visible = true;
-    osmTrees.visible = true;
 
     apartments.definitionExpression = "";
 
