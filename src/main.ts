@@ -56,7 +56,9 @@ const apartments = new FeatureLayer({
   title: "Utrecht Apartments",
   elevationInfo: {
     mode: "absolute-height",
-  }
+  },
+  minScale: 0,
+  maxScale: 0
 });
 map.add(apartments);
 
